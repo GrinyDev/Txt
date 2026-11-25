@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="CNC Studio 免责声明与安全说明：刀路、G-code、材料参数与仿真展示功能的使用边界与安全责任提示。">
+<!-- 状态栏/浏览器 UI 取色（标准 Web 方案，与 webapp 桥接互为兜底） -->
+<meta name="theme-color" content="#0098dc">
+<title>CNC Studio · 免责声明与安全说明</title>
+<style>
+  /* ===== MD3 Design Tokens ===== */
+  :root{
+    color-scheme: light;
+
+    --primary:#465C8B;
+    --on-primary:#FFFFFF;
+    --primary-container:#D9E2FF;
+    --on-primary-container:#001945;
+
+    --tertiary-container:#FFDCC0;
+    --on-tertiary-container:#2D1600;
+
+    --surface:#FBF8FF;
+    --on-surface:#1A1B20;
+    --surface-variant:#E2E1EC;
+    --on-surface-variant:#45464F;
+
+    --surface-container-lowest:#FFFFFF;
+    --surface-container-low:#F5F2FA;
+    --surface-container:#EFEDF4;
+    --surface-container-high:#E9E7EF;
+
+    --outline:#757680;
+    --outline-variant:#C5C6D0;
+
+    /* shape */
+    --r-xs:8px;
+    --r-sm:12px;
+    --r-md:16px;
+    --r-lg:24px;
+
+    /* type */
+    --ff: Roboto, "HarmonyOS Sans SC", system-ui, -apple-system, "Segoe UI",
+          "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root{
+      color-scheme: dark;
+
+      --primary:#B4C5FF;
+      --on-primary:#16305F;
+      --primary-container:#2F4675;
+      --on-primary-container:#DAE2FF;
+
+      --tertiary-container:#5B3B10;
+      --on-tertiary-container:#FFDCC0;
+
+      --surface:#12131A;
+      --on-surface:#E4E1E9;
+      --surface-variant:#45464F;
+      --on-surface-variant:#C6C5D0;
+
+      --surface-container-lowest:#0D0E14;
+      --surface-container-low:#1A1B22;
+      --surface-container:#1E1F26;
+      --surface-container-high:#282A31;
+
+      --outline:#90909B;
+      --outline-variant:#45464F;
+    }
+  }
+
+  /* ===== Base ===== */
+  *{ box-sizing:border-box; }
+  html{ -webkit-text-size-adjust:100%; }
+
+  body{
+    margin:0;
+    background:var(--surface);
+    color:var(--on-surface);
+    font-family:var(--ff);
+    font-size:16px;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+
+  /* ===== Top App Bar ===== */
+  .app-bar{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:color-mix(in srgb, var(--surface) 85%, transparent);
+    backdrop-filter:saturate(1.6) blur(14px);
+    -webkit-backdrop-filter:saturate(1.6) blur(14px);
+    border-bottom:1px solid var(--outline-variant);
+  }
+  .app-bar__inner{
+    max-width:900px;
+    margin:0 auto;
+    padding:12px 24px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .brand-mark{
+    flex:none;
+    width:34px; height:34px;
+    border-radius:11px;
+    background:var(--primary);
+    color:var(--on-primary);
+    display:grid; place-items:center;
+    font-size:11px; font-weight:700; letter-spacing:.04em;
+  }
+  .brand-text{ display:flex; flex-direction:column; line-height:1.3; min-width:0; }
+  .brand-text b{ font-size:14px; font-weight:600; letter-spacing:.01em; }
+  .brand-text span{ font-size:12px; color:var(--on-surface-variant); }
+
+  /* ===== Layout ===== */
+  .wrap{
+    max-width:900px;
+    margin:0 auto;
+    padding:48px 24px 80px;
+  }
+
+  /* ===== Hero ===== */
+  .chips{
+    display:flex; flex-wrap:wrap; gap:8px;
+    margin-bottom:22px;
+  }
+  .chip{
+    font-size:12px; line-height:16px;
+    padding:7px 14px;
+    border-radius:var(--r-xs);
+    background:var(--surface-container-high);
+    color:var(--on-surface-variant);
+    letter-spacing:.01em;
+  }
+
+  .hero h1{
+    margin:0 0 14px;
+    font-size:clamp(27px, 5vw, 40px);
+    line-height:1.22;
+    font-weight:600;
+    letter-spacing:-.02em;
+    text-wrap:balance;
+  }
+  .hero p{
+    margin:0;
+    max-width:62ch;
+    font-size:16px;
+    color:var(--on-surface-variant);
+    text-wrap:pretty;
+  }
+
+  /* ===== Notice Banner ===== */
+  .notice{
+    display:flex;
+    gap:14px;
+    margin:32px 0 40px;
+    padding:20px 22px;
+    border-radius:var(--r-md);
+    background:var(--tertiary-container);
+    color:var(--on-tertiary-container);
+  }
+  .notice svg{ flex:none; margin-top:2px; opacity:.9; }
+  .notice p{ margin:0; font-size:15px; line-height:1.8; text-wrap:pretty; }
+  .notice b{ font-weight:700; }
+
+  /* ===== Section Cards ===== */
+  .section{
+    background:var(--surface-container-low);
+    border-radius:var(--r-md);
+    padding:26px 26px 24px;
+    margin-bottom:14px;
+    transition:background-color .2s ease;
+  }
+  .section:hover{ background:var(--surface-container); }
+
+  .section__head{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:12px;
+  }
+  .section__badge{
+    flex:none;
+    width:36px; height:36px;
+    border-radius:var(--r-sm);
+    display:grid; place-items:center;
+    background:var(--primary-container);
+    color:var(--on-primary-container);
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:0;
+  }
+  .section__title{
+    margin:0;
+    font-size:17px;
+    line-height:1.45;
+    font-weight:600;
+    letter-spacing:0;
+    text-wrap:balance;
+  }
+  .section p{
+    margin:0;
+    font-size:15px;
+    line-height:1.85;
+    color:var(--on-surface-variant);
+    text-wrap:pretty;
+  }
+  .section p + p{ margin-top:12px; }
+  .section strong{
+    color:var(--on-surface);
+    font-weight:600;
+  }
+
+  /* 检查清单 */
+  .checklist{
+    list-style:none;
+    margin:14px 0 0;
+    padding:0;
+    display:grid;
+    gap:8px;
+  }
+  .checklist li{
+    position:relative;
+    padding-left:22px;
+    font-size:15px;
+    line-height:1.8;
+    color:var(--on-surface-variant);
+  }
+  .checklist li::before{
+    content:"";
+    position:absolute;
+    left:6px;
+    top:.72em;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--primary);
+    opacity:.65;
+  }
+  .section .checklist + p{ margin-top:14px; }
+
+  /* ===== Footer ===== */
+  .foot{
+    margin-top:36px;
+    padding-top:26px;
+    border-top:1px solid var(--outline-variant);
+    display:flex;
+    gap:14px;
+    align-items:center;          /* 图标与文字整体垂直居中 */
+    font-size:12.5px;            /* ← 字号缩小 */
+    line-height:1.7;
+    color:var(--on-surface-variant);
+  }
+  .foot svg{
+    flex:none;
+    width:30px;
+    height:30px;
+    color:var(--primary);
+  }
+  .foot p{ margin:0; text-wrap:pretty; }
+  .foot b,
+  .foot-em{
+    color:var(--primary);        /* ← 重点着色 */
+    font-weight:600;
+  }
+
+  /* ===== A11y ===== */
+  a:focus-visible,
+  [tabindex]:focus-visible{
+    outline:2px solid var(--primary);
+    outline-offset:3px;
+    border-radius:var(--r-xs);
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width:600px){
+    .wrap{ padding:32px 16px 64px; }
+    .app-bar__inner{ padding:10px 16px; }
+    .notice{ padding:18px; margin:28px 0 32px; }
+    .section{ padding:22px 18px 20px; }
+    .section__head{ gap:12px; }
+    .section__badge{ width:32px; height:32px; border-radius:10px; font-size:13px; }
+    .section__title{ font-size:16px; }
+    .foot{ gap:12px; font-size:12px; }
+    .foot svg{ width:24px; height:24px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; animation:none !important; }
+  }
+
+  @media print{
+    .app-bar{ position:static; background:none; backdrop-filter:none; }
+    .section{ background:none; padding:0 0 16px; margin-bottom:16px; border-bottom:1px solid #ddd; break-inside:avoid; }
+    .notice{ background:none; border:1px solid #ccc; }
+    .foot{ break-inside:avoid; }
+    .foot svg,
+    .foot b,
+    .foot-em{ color:#000; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-bar">
+  <div class="app-bar__inner">
+    <div class="brand-mark" aria-hidden="true">CNC</div>
+    <div class="brand-text">
+      <b>CNC Studio</b>
+      <span>免责声明与安全说明</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="chips">
+      <span class="chip">刀路</span>
+      <span class="chip">G-code</span>
+      <span class="chip">材料参数</span>
+      <span class="chip">仿真展示</span>
+    </div>
+    <h1>CNC Studio 免责声明与安全说明</h1>
+    <p>适用于 CNC Studio 软件及其刀路、G-code、材料参数与仿真展示功能。使用任何输出进行实际加工前，请先阅读本页。</p>
+  </section>
+
+  <!-- Notice -->
+  <aside class="notice" role="note">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M12 2 1 21h22L12 2Zm0 4.2 7.9 13.8H4.1L12 6.2Zm-1 4.3v4.6h2v-4.6h-2Zm0 5.7v2h2v-2h-2Z"/>
+    </svg>
+    <p><b>重要：</b>本页面提供一般性使用边界说明，不构成法律意见、专业机械工程意见或安全加工建议。实际操作前，必须由具备相应能力的操作者结合设备说明书和现场条件独立核验。</p>
+  </aside>
+
+  <!-- Sections -->
+  <article class="section">
+    <div class="section__head">
+      <span class="section__badge" aria-hidden="true">一</span>
+      <h2 class="section__title">输出内容仅供辅助参考</h2>
+    </div>
+    <p>软件生成的图形、刀路、坐标、进给与转速等数值以及 G-code，均由程序逻辑依据输入信息计算，<strong>不保证适用于任何特定机床、控制器、工件、刀具、夹具、材料或作业环境</strong>。金属与刀具参数仅作显示、估算或规划用途，不应作为安全加工建议或实际加工参数的直接依据。</p>
+  </article>
+
+  <article class="section">
+    <div class="section__head">
+      <span class="section__badge" aria-hidden="true">二</span>
+      <h2 class="section__title">必须独立验证设备与程序</h2>
+    </div>
+    <p>操作者应在运行前逐项确认以下内容：</p>
+    <ul class="checklist">
+      <li>机床行程、运动方向与回零状态</li>
+      <li>工件装夹与夹具固定是否可靠</li>
+      <li>坐标原点与 Z 零点设定</li>
+      <li>刀具规格、伸出长度与磨损状态</li>
+      <li>刀路顺序、安全高度与抬刀高度</li>
+      <li>切削深度、进给速度与主轴转速</li>
+      <li>控制器兼容性（指令、单位、循环）</li>
+      <li>急停、防护门与除尘排屑装置</li>
+    </ul>
+    <p>应按设备要求进行<strong>空运行或其他低风险核验</strong>；发现异常，应停止操作并由专业人员排查。</p>
+  </article>
+
+  <article class="section">
+    <div class="section__head">
+      <span class="section__badge" aria-hidden="true">三</span>
+      <h2 class="section__title">仿真仅为视觉展示</h2>
+    </div>
+    <p>软件内 2D/3D 浮雕预览、刀具运动、主轴启停、切屑飞散、完成撒花、进度和材料外观均为屏幕上的视觉模拟。<strong>它们不反映真实机床状态、实际受力、热量、排屑、切削质量或安全状况</strong>，也不能替代 CAM 仿真、机床控制器校验或现场监护。</p>
+  </article>
+
+  <article class="section">
+    <div class="section__head">
+      <span class="section__badge" aria-hidden="true">四</span>
+      <h2 class="section__title">风险与责任</h2>
+    </div>
+    <p>CNC 加工可能造成人身伤害、设备损坏、火灾或财产损失。使用者应遵守当地法律法规、设备厂商要求和工作场所安全规范，使用适当防护并确保现场有人监护。</p>
+    <p>使用者对输入数据、程序复核、设备操作及最终加工结果承担相应责任。<strong>法律不允许排除或限制的责任不受本声明影响。</strong></p>
+  </article>
+
+  <article class="section">
+    <div class="section__head">
+      <span class="section__badge" aria-hidden="true">五</span>
+      <h2 class="section__title">适用范围与更新</h2>
+    </div>
+    <p>本声明针对软件功能的使用边界，不替代设备制造商、刀具制造商或材料供应商的正式文件。声明内容可能随软件版本调整；使用者应在每次加工前查看当前版本与现场要求。</p>
+  </article>
+
+  <!-- Footer -->
+  <footer class="foot">
+    <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M12 1 3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4Z"/>
+    </svg>
+    <p><b>CNC Studio · 安全第一。</b>若无法确认程序或设备状态，<span class="foot-em">请勿启动加工</span>，并咨询具备资质的专业人员。</p>
+  </footer>
+
+</main>
+
+<script>
+(function () {
+  // 状态栏目标色：与 App 界面背景保持一致的品牌蓝
+  var STATUS_BAR_COLOR = '#D9E2FF';
+
+  /* 1) 标准 Web 适配：同步 theme-color，供浏览器/WebApp 状态栏取色 */
+  var themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (!themeMeta) {
+    themeMeta = document.createElement('meta');
+    themeMeta.setAttribute('name', 'theme-color');
+    document.head.appendChild(themeMeta);
+  }
+  themeMeta.setAttribute('content', STATUS_BAR_COLOR);
+
+  /* 2) 宿主 App 桥接：若 webapp 对象存在则调用，实现状态栏与界面同色 */
+  try {
+    if (typeof webapp !== 'undefined' && webapp &&
+        typeof webapp['设置状态栏变色'] === 'function') {
+      webapp['设置状态栏变色'](STATUS_BAR_COLOR);
+    }
+  } catch (err) {
+    // 非宿主环境（普通浏览器）静默忽略
+  }
+})();
+</script>
+
+</body>
+</html>
